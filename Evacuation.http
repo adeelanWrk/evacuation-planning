@@ -1,0 +1,6 @@
+@Evacuation_HostAddress = http://localhost:5293
+
+GET {{Evacuation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
