@@ -47,7 +47,7 @@ public class AddVehicleCmd : IRequest<JsonDataDTO<List<VehicleDTO>>>
             return new JsonDataDTO<List<VehicleDTO>>()
             {
                 Data = newVehicles,
-                Desc = "Evacuation Zone added successfully"
+                Desc = "Evacuation Vehicles added successfully"
             };
         }
     }

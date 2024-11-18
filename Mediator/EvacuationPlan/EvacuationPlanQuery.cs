@@ -222,7 +222,15 @@ public class EvacuationPlanQuery : IRequest<JsonDataDTO<List<EvacuationPlanDTO>>
                .Where(item => item.ArriveInMinute <= urgencyLevelArriveTimeDdl[urgencyLevel])
                .ToList();
 
-            var possibleCombination = await CreateSubsetsAsync(vehicleAvailable.ToArray(), peopleToEvacuate);
+            var possibleCombination = await CreateSubsetsAsync(vehicleAvailable.ToArray());
+
+            possibleCombination = possibleCombination?
+                        .Where(x => x.Sum(s => s.VehicleCapacity) >= peopleToEvacuate)
+                        .ToList();
+
+
+            if (possibleCombination?.Any() == false)
+                return (vehicleAvailable, new StringBuilder($"No available vehicle for zoneId: {zoneId} with urgency level {urgencyLevel}. "));
 
             var possibleStatics = GeneratePossiblePlanStatics(possibleCombination, peopleToEvacuate);
 
@@ -240,7 +248,7 @@ public class EvacuationPlanQuery : IRequest<JsonDataDTO<List<EvacuationPlanDTO>>
 
             return (bestVehiclesPlan, errorMessage);
         }
-        public static async Task<List<T[]>> CreateSubsetsAsync<T>(T[] originalArray, int peopleToEvacuate)
+        public static async Task<List<T[]>> CreateSubsetsAsync<T>(T[] originalArray)
         {
             return await Task.Run(() =>
             {
@@ -275,7 +283,7 @@ public class EvacuationPlanQuery : IRequest<JsonDataDTO<List<EvacuationPlanDTO>>
             if (bestPlan == null)
                 return new List<DraftEvacuationPlanDTO>();
 
-            if (bestPlan.DiffCapacityAndPeopleToEvacuate > 10)
+            if (bestPlan.UrgencyLevel < 4 && bestPlan.DiffCapacityAndPeopleToEvacuate > 10)
             {
                 var closestCapacity = posiblePlans
                     .Where(x => x.DiffCapacityAndPeopleToEvacuate <= 10)
@@ -288,7 +296,7 @@ public class EvacuationPlanQuery : IRequest<JsonDataDTO<List<EvacuationPlanDTO>>
                 }
             }
 
-            return vehicleInPlan[bestPlan.index].OrderByDescending(x=> x.VehicleCapacity).ToList();
+            return vehicleInPlan[bestPlan.index].OrderByDescending(x => x.VehicleCapacity).ToList();
         }
 
         private static Dictionary<int, int> urgencyLevelArriveTimeDdl = new Dictionary<int, int>
@@ -312,17 +320,17 @@ public class EvacuationPlanQuery : IRequest<JsonDataDTO<List<EvacuationPlanDTO>>
         }
 
         private static List<PosiblePlanStaticDTO> GeneratePossiblePlanStatics(
-            List<DraftEvacuationPlanDTO[]> possibleCombination,
+            List<DraftEvacuationPlanDTO[]>? possibleCombination,
             int peopleToEvacuate)
         {
             var possibleStatics = new List<PosiblePlanStaticDTO>();
 
-            for (int i = 0; i < possibleCombination.Count; i++)
+            for (int i = 0; i < possibleCombination?.Count; i++)
             {
-                if (possibleCombination[i].Sum(x => x.VehicleCapacity) >= peopleToEvacuate)
-                {
-                    possibleStatics.Add(CreatePosiblePlanStatic(possibleCombination[i], peopleToEvacuate, i));
-                }
+                // if (possibleCombination[i].Sum(x => x.VehicleCapacity) >= peopleToEvacuate)
+                // {
+                possibleStatics.Add(CreatePosiblePlanStatic(possibleCombination[i], peopleToEvacuate, i));
+                // }
             }
 
             return possibleStatics;
