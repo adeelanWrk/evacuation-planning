@@ -34,7 +34,7 @@ public class RemoveEvacuationPlanCmd : IRequest<JsonDataDTO<object>>
             return new JsonDataDTO<object>()
             {
                 Data = null,
-                Desc = "Evacuation Zone added successfully"
+                Desc = "Clear data successfully"
             };
         }
     }
